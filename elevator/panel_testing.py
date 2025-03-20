@@ -154,10 +154,11 @@ def coords_to_index(row, col, width, height):
     else:
         return col * height + (height - 1 - row)
 
-def play(timestamp, width, height, stay=1): 
+def play(timestamp, width, height, stay=1, offset=0): 
     """
     timestamp: what timestamp the LEDs should be on right now
     stay: how many rows to stay, default 1 row
+    offset: how many rows the bottom row is from the ground (for the smaller panels if time)
     """
     # initialize the matrix to all black 
     num_leds = width * height
@@ -172,7 +173,7 @@ def play(timestamp, width, height, stay=1):
 
         # given the timestamp and the row, col coordinates
         # set the color of the LED that should be white 
-        if row in range(light_start_row, light_end_row):
+        if (row + offset) in range(light_start_row, light_end_row):
             leds[row][col] = '#FFFFFF'
     return leds
 
