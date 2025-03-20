@@ -154,8 +154,42 @@ def coords_to_index(row, col, width, height):
     else:
         return col * height + (height - 1 - row)
 
-def play(timestamp, width, height, stay=1, offset=0): 
+def ceiling_play(timestamp, width, height, stay=1, offset=0):
     """
+    Creates a border-to-center wave effect where cells turn white based on their
+    distance from the border.
+
+    timestamp: what timestamp the LEDs should be on right now
+    stay: how many rows to stay, default 1 row
+    offset: how many timestamps to wait (i.e. the height of the wall panels)
+    """
+    # initialize the matrix to all black 
+    num_leds = width * height
+    leds = [['#000000' for _ in range(width)] for _ in range(height)]
+
+    # calculate the distance to the border 
+    distance = (timestamp % min(width // 2, height // 2)) - offset
+    if distance < 0: 
+        return leds
+
+    for led in range(num_leds):
+        row, col = led_to_coords(led, width, height)
+
+        # calculate the distance to the nearest border
+        row_distance = min(row, height - 1 - row)
+        col_distance = min(col, width - 1 - col)
+
+        if ((distance <= row_distance < distance + stay or distance <= col_distance < distance + stay) 
+                and (row_distance >= distance and col_distance >= distance)):
+            leds[row][col] = '#FFFFFF'
+            # TODO: should actually fill an led array such that leds[led] = color
+
+    return leds
+
+def wall_play(timestamp, width, height, stay=1, offset=0): 
+    """
+    white fans bottom to up
+
     timestamp: what timestamp the LEDs should be on right now
     stay: how many rows to stay, default 1 row
     offset: how many rows the bottom row is from the ground (for the smaller panels if time)
@@ -175,6 +209,8 @@ def play(timestamp, width, height, stay=1, offset=0):
         # set the color of the LED that should be white 
         if (row + offset) in range(light_start_row, light_end_row):
             leds[row][col] = '#FFFFFF'
+            # TODO: should actually fill an led array such that leds[led] = color
+
     return leds
 
 def main():
@@ -182,8 +218,12 @@ def main():
     width, height = 12, 25
 
     # Create frames for HEIGHT timestamps 
-    for ts in range(height):
-        matrix = play(ts, width, height, stay=2)
+    for ts in range(FRAMES):
+        matrix = wall_play(ts, width, height, stay=2)
+        frames.append(matrix)
+
+    for ts in range(FRAMES):
+        matrix = ceiling_play(ts, width, height, stay=2)
         frames.append(matrix)
     
     # Show the animation
